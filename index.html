@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="ca" data-bs-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Centre Excursionista Moli-Nou</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header>
+  <div class="header-brand">
+    <h1>🏔️ Centre Excursionista Moli-Nou</h1>
+    <p>Explora, gaudeix, connecta amb la natura</p>
+  </div>
+  <div class="header-right">
+    <div id="rellotge"></div>
+    <button id="mode-btn">☀️</button>
+  </div>
+</header>
+
+<div class="layout">
+  <nav class="sidebar">
+    <span class="sidebar-label">Navegació</span>
+    <a href="index.html" class="actiu">🏠 Inici</a>
+    <a href="galeria.html">📸 Galeria</a>
+    <a href="mapas.html">🗺️ Mapes</a>
+  </nav>
+
+  <main>
+    <section class="mb-4">
+      <h2 class="section-title">🚵 Activitats</h2>
+      <div class="row g-3">
+        <div class="col-sm-6 col-lg-3">
+          <div class="activity-card" onclick="obrirModal('🥾','Senders a peu per tots els nivells. Descobreix rutes guiades cada cap de setmana.')">
+            <span class="card-icon">🥾</span>
+            <h5>Senderisme</h5>
+            <p>Rutes a peu per paratges naturals únics.</p>
+          </div>
+        </div>
+        <div class="col-sm-6 col-lg-3">
+          <div class="activity-card" onclick="obrirModal('🚵','Sortides en BTT per pistes i senders. Nivells: iniciació, mitjà i avançat.')">
+            <span class="card-icon">🚵</span>
+            <h5>BTT / Ciclisme</h5>
+            <p>Rutes en bicicleta de muntanya per boscos i valls.</p>
+          </div>
+        </div>
+        <div class="col-sm-6 col-lg-3">
+          <div class="activity-card" onclick="obrirModal('🧗','Escalada en roca i rocòdrom. Cursos per a principiants.')">
+            <span class="card-icon">🧗</span>
+            <h5>Escalada</h5>
+            <p>Escalada en roca natural i rocòdrom.</p>
+          </div>
+        </div>
+        <div class="col-sm-6 col-lg-3">
+          <div class="activity-card" onclick="obrirModal('🏕️','Acampades i eixades de cap de setmana en refugis i zones d\'acampada.')">
+            <span class="card-icon">🏕️</span>
+            <h5>Acampada</h5>
+            <p>Eixades amb nit en refugi o tenda.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2 class="section-title">📅 Pròximes Sortides</h2>
+      <div id="sortides" class="row g-3"></div>
+    </section>
+  </main>
+</div>
+
+<footer>
+  &copy; 2026 Centre Excursionista Moli-Nou &nbsp;&middot;&nbsp; C/ de la Muntanya, 12 &nbsp;&middot;&nbsp; moli-nou@excursio.cat
+</footer>
+
+<div id="modal" class="modal-overlay" onclick="if(event.target===this)tancarModal()">
+  <div class="modal-box">
+    <button class="modal-close" onclick="tancarModal()">✕</button>
+    <span id="modal-icon"></span>
+    <p id="modal-desc"></p>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/js/bootstrap.bundle.min.js"></script>
+<script src="script.js"></script>
+<script>
+  const sortides = [
+    { dia:23, mes:'Maig', nom:'Ruta dels Tres Turons', tipus:'🥾 Senderisme', dist:'12 km' },
+    { dia:25, mes:'Maig', nom:'Baixada BTT Coll de la Creu', tipus:'🚵 BTT', dist:'18 km' },
+    { dia:30, mes:'Maig', nom:'Ascensió al Pedraforca', tipus:'🥾 Senderisme', dist:'14 km' },
+    { dia:1, mes:'Juny', nom:'Ruta nocturna Lluna Plena', tipus:'🥾 Senderisme', dist:'8 km' },
+    { dia:6, mes:'Juny', nom:'BTT Ruta dels Llacs', tipus:'🚵 BTT', dist:'25 km' },
+    { dia:8, mes:'Juny', nom:'Escalada a Montserrat', tipus:'🧗 Escalada', dist:'6 vies' },
+  ];
+  const c = document.getElementById('sortides');
+  sortides.forEach(s => {
+    c.innerHTML += `
+      <div class="col-md-6 col-lg-4">
+        <div class="event-card">
+          <div class="event-date">
+            <span class="day">${s.dia}</span>
+            <span class="month">${s.mes}</span>
+          </div>
+          <div>
+            <div class="event-name">${s.nom}</div>
+            <div class="event-meta">
+              <span class="badge-pill">${s.tipus}</span>
+              <span class="event-dist">${s.dist}</span>
+            </div>
+          </div>
+        </div>
+      </div>`;
+  });
+</script>
+</body>
+</html>

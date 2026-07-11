@@ -1,0 +1,121 @@
+========================================
+CREAR.TXT — Registre complet del procés
+========================================
+Projecte: Centre Excursionista Moli-Nou
+Data: 14/06/2026
+========================================
+
+1. PETICIÓ INICIAL
+------------------
+"conecta con una api de rutas y senderos de largo y corto recorido de cada comunidad autonoma"
+
+2. EXPLORACIÓ DEL PROJECTE
+---------------------------
+Arxius existents a C:\Users\rasta\sources\moli-nou:
+  - index.html       (Pàgina principal amb activitats i sortides)
+  - galeria.html     (Galeria de fotografies)
+  - mapas.html       (Mapes de rutes GR, PR i Parcs Naturals — amb dades estàtiques)
+  - script.js        (Funcions globals: rellotge, mode fosc, modal)
+  - styles.css       (Estils del projecte)
+
+3. ANÀLISI DE mapas.html (ABANS DELS CANVIS)
+----------------------------------------------
+El fitxer mapas.html contenia:
+  - Arrays estàtics de rutes GR (8 rutes) i PR (8 rutes) amb nom, km i bbox
+  - Array de Parcs Naturals (7 parcs) amb nom, descripció i bbox
+  - Funcions: obrirModalMapa, tancarModalMapa, crearLlista, crearParcs
+  - Les rutes es mostraven en llistes clicables que obrien un modal amb un mapa embegut d'OpenStreetMap
+
+4. OPCIONS D'API PROPOSADES
+----------------------------
+Es van presentar 3 opciones a l'usuari:
+  A) Overpass API (OpenStreetMap) — Consulta directa de rutes GR/PR, sense API key ← SELECCIONADA
+  B) Waymarked Trails API — API pública específica per senderisme
+  C) API pròpia / personalitzada
+
+5. CANVIS REALITZATS A mapas.html
+-----------------------------------
+
+5.1. NOU HTML — Selector de comunitat autònoma (línies 31-38)
+  - Afegit un selector desplegable (<select id="selector-ccaa">) amb les 17 CCAA + "Totes"
+  - Botó "Recarregar" (<button id="btn-recargar">)
+  - Indicador d'estat (<span id="status-api">)
+
+5.2. NOU JAVASCRIPT — Dades i configuració (línies 74-127)
+  - OVERPASS_URL = 'https://overpass-api.de/api/interpreter'
+  - CCAA: Array amb 18 entrades (Totes + 17 comunitats autònomes amb codis ISO3166-2)
+  - fallbackGR: Array amb 7 rutes GR estàtiques (per si falla l'API)
+  - fallbackPR: Array amb 8 rutes PR estàtiques (per si falla l'API)
+  - parcs: Array amb 7 parcs naturals (es manté estàtic)
+  - OVERPASS_LIMIT = 80 (límit de resultats per consulta)
+
+5.3. NOVA FUNCIÓ — fetchRutesOverpass(prefix, areaIso) (línies 185-219)
+  - Construeix una consulta Overpass QL dinàmicament:
+    * Filtre per àrea: area["ISO3166-2"="ES-CT"] (CCAA concreta) o area["ISO3166-1"="ES"] (totes)
+    * Cerca relacions: relation["route"="hiking"]["ref"~"^GR"] o relation["route"="hiking"]["ref"~"^PR"]
+    * Sortida: out center tags(80) — centre geogràfic i etiquetes
+  - Mètode: POST amb cos URL-encoded (data=...)
+  - Processa la resposta JSON:
+    * Filtra elements amb tags.ref
+    * Calcula bbox amb padding de 0.04 graus (~4.4 km) al voltant del centre
+    * Extreu distància de tags.distance o tags.length
+    * Construeix nom: "ref — name" o només "ref"
+    * Ordena alfabèticament per ref (amb numeric sorting)
+
+  Exemple de consulta Overpass generada:
+    [out:json][timeout:30];
+    area["ISO3166-2"="ES-CT"]->.searchArea;
+    (
+      relation["route"="hiking"]["ref"~"^GR"](area.searchArea);
+    );
+    out center tags(80);
+
+5.4. NOVA FUNCIÓ — carregarRutes() (línies 230-257)
+  - Llegeix la CCAA seleccionada del selector
+  - Crida setStatus("⏳ Carregant GR i PR de {CCAA}...")
+  - Executa en paral·lel fetchRutesOverpass('GR', iso) i fetchRutesOverpass('PR', iso)
+  - Renderitza les llistes amb crearLlista
+  - Mostra resum: "✅ X GR, Y PR de Catalunya"
+  - En cas d'error:
+    * Mostra "⚠️ No s'ha pogut contactar l'API. Mostrant dades locals."
+    * Carrega fallbackGR i fallbackPR
+
+5.5. NOVA FUNCIÓ — initSelector() (línies 259-270)
+  - Omple el <select> amb totes les CCAA
+  - Selecciona "Catalunya" (ES-CT) per defecte
+  - Assigna events: change al select, click al botó de recarregar
+
+5.6. FUNCIONS MODIFICADES
+  - crearLlista(id, dades): Ara buida el contenidor abans de renderitzar;
+    mostra "🔍 No s'han trobat rutes." si la llista és buida
+  - setStatus(text, error): Mostra text d'estat; opcionalment en color danger
+
+5.7. INICIALITZACIÓ (línies 272-280)
+  - Event DOMContentLoaded:
+    * Modal: click outside i tecla Escape per tancar
+    * initSelector() — població del selector
+    * crearParcs(parcs) — renderitzat estàtic de parcs
+    * carregarRutes() — càrrega inicial per defecte (Catalunya)
+
+6. ESTRUCTURA FINAL DE mapas.html
+-----------------------------------
+- Línies 1-9:   Head (meta, title, bootstrap, styles)
+- Línies 10-21: Header (títol, botó mode, rellotge)
+- Línies 22-28: Sidebar (navegació)
+- Línies 30-57: Main
+                   * 31-38:  Selector CCAA + botó + estat
+                   * 40-44:  Llista GR
+                   * 46-50:  Llista PR
+                   * 52-56:  Parcs Naturals
+- Línies 60-62: Footer
+- Línies 64-70: Modal (visort de mapa OpenStreetMap)
+- Línies 72-73: Scripts (bootstrap, script.js)
+- Línies 74-281: JavaScript (lògica API Overpass, renderitzat, events)
+- Línia 282-283: Tancament body/html
+
+7. FITXERS NO MODIFICATS
+-------------------------
+- index.html (sense canvis)
+- galeria.html (sense canvis)
+- script.js (sense canvis)
+- styles.css (sense canvis)

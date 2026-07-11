@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="ca" data-bs-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Galeria · Moli-Nou</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header>
+  <div class="header-brand">
+    <h1>📸 Galeria de Sortides</h1>
+    <p>Els millors moments de les nostres excursions</p>
+  </div>
+  <div class="header-right">
+    <div id="rellotge"></div>
+    <button id="mode-btn">☀️</button>
+  </div>
+</header>
+
+<div class="layout">
+  <nav class="sidebar">
+    <span class="sidebar-label">Navegació</span>
+    <a href="index.html">🏠 Inici</a>
+    <a href="galeria.html" class="actiu">📸 Galeria</a>
+    <a href="mapas.html">🗺️ Mapes</a>
+  </nav>
+
+  <main>
+    <section>
+      <h2 class="section-title">🖼️ Fotografies</h2>
+      <div class="photo-grid" id="galeria"></div>
+    </section>
+  </main>
+</div>
+
+<footer>
+  &copy; 2026 Centre Excursionista Moli-Nou &nbsp;&middot;&nbsp; C/ de la Muntanya, 12 &nbsp;&middot;&nbsp; moli-nou@excursio.cat
+</footer>
+
+<div id="modal" class="modal-overlay" onclick="if(event.target===this)tancarModal()">
+  <div class="modal-box">
+    <button class="modal-close" onclick="tancarModal()">✕</button>
+    <span id="modal-icon"></span>
+    <p id="modal-desc"></p>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/js/bootstrap.bundle.min.js"></script>
+<script src="script.js"></script>
+<script>
+  const fotos = [
+    { emoji:'🏔️', text:'Cim del Pedraforca', lloc:'Pedraforca' },
+    { emoji:'🌲', text:'Bosc de la Fageda', lloc:"La Fageda d'en Jordà" },
+    { emoji:'🚵', text:'Ruta BTT Coll de la Creu', lloc:"Coll de la Creu" },
+    { emoji:'🏕️', text:'Acampada a l\'Estany Llong', lloc:'Pirineus' },
+    { emoji:'🧗', text:'Escalada a Montserrat', lloc:'Montserrat' },
+    { emoji:'🌅', text:'Posta de sol al Montseny', lloc:'Montseny' },
+    { emoji:'🥾', text:'Senders de la Vall de Núria', lloc:'Vall de Núria' },
+    { emoji:'⛰️', text:'Vista del Canigó', lloc:'Canigó' },
+    { emoji:'🌊', text:'Ruta als Estanys de la Pera', lloc:'Pirineus' },
+    { emoji:'🚴', text:'BTT per la Ruta del Ferro', lloc:'Ripollès' },
+    { emoji:'🏞️', text:'Gorgs del Torrent de les Galaenes', lloc:'Poblet' },
+    { emoji:'🌄', text:'Sortida d\'excursió a l\'alba', lloc:'Montserrat' },
+  ];
+  const g = document.getElementById('galeria');
+  fotos.forEach(f => {
+    const div = document.createElement('div');
+    div.className = 'foto';
+    div.innerHTML = `<span>${f.emoji}</span><div class="etiqueta">${f.text}</div>`;
+    div.addEventListener('click', () => obrirModal(f.emoji, `${f.text} · ${f.lloc}`));
+    g.appendChild(div);
+  });
+</script>
+</body>
+</html>

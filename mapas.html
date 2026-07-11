@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="ca" data-bs-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mapes · Moli-Nou</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header>
+  <div class="header-brand">
+    <h1>🗺️ Mapes de Rutes</h1>
+    <p>GR i PR dels Parcs Naturals d'Espanya</p>
+  </div>
+  <div class="header-right">
+    <div id="rellotge"></div>
+    <button id="mode-btn">☀️</button>
+  </div>
+</header>
+
+<div class="layout">
+  <nav class="sidebar">
+    <span class="sidebar-label">Navegació</span>
+    <a href="index.html">🏠 Inici</a>
+    <a href="galeria.html">📸 Galeria</a>
+    <a href="mapas.html" class="actiu">🗺️ Mapes</a>
+  </nav>
+
+  <main>
+    <section class="mb-4">
+      <div class="filter-bar">
+        <label for="selector-ccaa">📍 Comunitat Autònoma:</label>
+        <select id="selector-ccaa" class="form-select"></select>
+        <button id="btn-recargar" class="btn-reload">🔄 Recarregar</button>
+        <span id="status-api"></span>
+      </div>
+    </section>
+
+    <section class="mb-4">
+      <h2 class="section-title">🥾 GR — Gran Recorregut</h2>
+      <p class="section-sub">Clica sobre qualsevol ruta per veure'n el mapa</p>
+      <div id="gr-list"></div>
+    </section>
+
+    <section class="mb-4">
+      <h2 class="section-title">🚶 PR — Petit Recorregut</h2>
+      <p class="section-sub">Clica sobre qualsevol ruta per veure'n el mapa</p>
+      <div id="pr-list"></div>
+    </section>
+
+    <section>
+      <h2 class="section-title">🌲 Parcs Naturals — Mapa interactiu</h2>
+      <p class="section-sub">Clica sobre cada mapa per ampliar-lo</p>
+      <div class="row g-3" id="parcs-list"></div>
+    </section>
+  </main>
+</div>
+
+<footer>
+  &copy; 2026 Centre Excursionista Moli-Nou &nbsp;&middot;&nbsp; C/ de la Muntanya, 12 &nbsp;&middot;&nbsp; moli-nou@excursio.cat
+</footer>
+
+<div id="modal-mapa" class="modal-overlay">
+  <div class="modal-mapa-contingut">
+    <button class="modal-close" onclick="tancarModalMapa()">✕</button>
+    <h5 id="modal-mapa-titol"></h5>
+    <iframe id="modal-mapa-frame" loading="lazy" allowfullscreen></iframe>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/js/bootstrap.bundle.min.js"></script>
+<script src="script.js"></script>
+<script>
+  const OVERPASS_URL = 'https://overpass-api.de/api/interpreter';
+
+  const CCAA = [
+    { nom: 'Totes', iso: '' },
+    { nom: 'Andalusia', iso: 'ES-AN' },
+    { nom: 'Aragó', iso: 'ES-AR' },
+    { nom: 'Astúries', iso: 'ES-AS' },
+    { nom: 'Illes Balears', iso: 'ES-IB' },
+    { nom: 'Canàries', iso: 'ES-CN' },
+    { nom: 'Cantàbria', iso: 'ES-CB' },
+    { nom: 'Castella-La Manxa', iso: 'ES-CM' },
+    { nom: 'Castella i Lleó', iso: 'ES-CL' },
+    { nom: 'Catalunya', iso: 'ES-CT' },
+    { nom: 'Comunitat Valenciana', iso: 'ES-VC' },
+    { nom: 'Extremadura', iso: 'ES-EX' },
+    { nom: 'Galícia', iso: 'ES-GA' },
+    { nom: 'La Rioja', iso: 'ES-RI' },
+    { nom: 'Madrid', iso: 'ES-MD' },
+    { nom: 'Múrcia', iso: 'ES-MC' },
+    { nom: 'Navarra', iso: 'ES-NC' },
+    { nom: 'País Basc', iso: 'ES-PV' },
+  ];
+
+  const fallbackGR = [
+    { nom:'GR-92 — Sender del Mediterrani', km:'500 km', bbox:'0.50,40.50,3.20,42.50' },
+    { nom:'GR-11 — Travessa dels Pirineus', km:'840 km', bbox:'-1.80,42.40,3.00,42.90' },
+    { nom:'GR-10 — Pirineus (vessant sud)', km:'900 km', bbox:'-1.80,42.30,3.00,42.70' },
+    { nom:'GR-7 — De Andorra a Tarifa', km:'2000 km', bbox:'-3.00,37.00,1.50,42.50' },
+    { nom:'GR-221 — Ruta de la Pedra en Sec (Mallorca)', km:'135 km', bbox:'2.50,39.50,3.00,39.90' },
+    { nom:'GR-1 — Sender Històric', km:'650 km', bbox:'-5.00,41.50,-2.00,43.00' },
+    { nom:'GR-124 — Volta al Montseny', km:'102 km', bbox:'2.30,41.70,2.55,41.90' },
+  ];
+  const fallbackPR = [
+    { nom:'PR-C 1 — Sender de les Fonts del Llobregat', km:'18 km', bbox:'1.80,42.10,2.10,42.30' },
+    { nom:'PR-C 55 — Ruta de les Ermites (Montserrat)', km:'12 km', bbox:'1.78,41.50,1.92,41.68' },
+    { nom:'PR-C 124 — Volta al Pedraforca', km:'14 km', bbox:'1.60,42.20,1.80,42.32' },
+    { nom:'PR-C 147 — Ruta dels Bunkers del Montseny', km:'8 km', bbox:'2.30,41.73,2.50,41.88' },
+    { nom:'PR-C 205 — Camí dels Enginyers (Pirineus)', km:'22 km', bbox:'1.00,42.50,1.30,42.70' },
+    { nom:'PR-BU 1 — Ruta de les Cascades (Ordesa)', km:'10 km', bbox:'-0.08,42.62,0.08,42.72' },
+    { nom:'PR-C 128 — Ruta dels Tres Turons', km:'6.5 km', bbox:'2.10,41.30,2.30,41.50' },
+    { nom:'PR-C 33 — Camí Vell de la Mola', km:'9 km', bbox:'2.00,41.52,2.10,41.62' },
+  ];
+  const parcs = [
+    { nom:"🏞️ Parc Nacional d'Aigüestortes i Estany de Sant Maurici", desc:'Pirineus catalans · 141 km² · 30+ rutes', bbox:'0.88,42.50,1.05,42.62' },
+    { nom:"🏞️ Parc Nacional d'Ordesa i Mont Perdut", desc:'Pirineu aragonès · 156 km² · GR-11, GR-15', bbox:'-0.10,42.60,0.10,42.75' },
+    { nom:'🏞️ Parc Natural del Cadí-Moixeró', desc:'Prepirineu català · 413 km² · Pedraforca, GR-150', bbox:'1.60,42.25,1.85,42.35' },
+    { nom:'🏞️ Parc Natural del Montseny', desc:'Barcelona-Girona · Reserva de la Biosfera · GR-2, GR-5', bbox:'2.30,41.73,2.50,41.85' },
+    { nom:'🏞️ Parc Natural de la Zona Volcànica de la Garrotxa', desc:'Girona · 40 cons volcànics · 28 rutes', bbox:'2.45,42.10,2.60,42.25' },
+    { nom:'🏞️ Parc Nacional de Sierra Nevada', desc:'Andalusia · 858 km² · GR-7, GR-240', bbox:'-3.50,37.00,-3.20,37.20' },
+    { nom:'🏞️ Parc Nacional de Picos de Europa', desc:'Astúries / Cantàbria / Castella i Lleó · GR-1, GR-202', bbox:'-5.00,43.10,-4.70,43.30' },
+  ];
+
+  const OVERPASS_LIMIT = 80;
+
+  function obrirModalMapa(titol, bbox) {
+    const p = bbox.split(',');
+    const lat = (parseFloat(p[1]) + parseFloat(p[3])) / 2;
+    const lon = (parseFloat(p[0]) + parseFloat(p[2])) / 2;
+    document.getElementById('modal-mapa-titol').textContent = titol;
+    document.getElementById('modal-mapa-frame').src =
+      `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${lat},${lon}`;
+    document.getElementById('modal-mapa').classList.add('visible');
+  }
+
+  function tancarModalMapa() {
+    document.getElementById('modal-mapa').classList.remove('visible');
+    document.getElementById('modal-mapa-frame').src = '';
+  }
+
+  function netejarLlista(id) {
+    const c = document.getElementById(id);
+    c.innerHTML = '';
+    return c;
+  }
+
+  function crearLlista(id, dades) {
+    const c = document.getElementById(id);
+    c.innerHTML = '';
+    if (dades.length === 0) {
+      c.innerHTML = '<div class="text-no-result">🔍 No s\'han trobat rutes.</div>';
+      return;
+    }
+    dades.forEach(item => {
+      const div = document.createElement('div');
+      div.className = 'mapa-item';
+      div.innerHTML = `<span class="fw-semibold">${item.nom}</span><span class="distancia">${item.km}</span>`;
+      div.addEventListener('click', () => obrirModalMapa(item.nom, item.bbox));
+      c.appendChild(div);
+    });
+  }
+
+  function crearParcs(dades) {
+    const c = document.getElementById('parcs-list');
+    dades.forEach(p => {
+      const parts = p.bbox.split(',');
+      const lat = (parseFloat(parts[1]) + parseFloat(parts[3])) / 2;
+      const lon = (parseFloat(parts[0]) + parseFloat(parts[2])) / 2;
+      const col = document.createElement('div');
+      col.className = 'col-md-6';
+      col.innerHTML =
+        `<div class="mapa-park"><div class="park-label">${p.nom}</div><div class="park-desc">${p.desc}</div><iframe src="https://www.openstreetmap.org/export/embed.html?bbox=${p.bbox}&layer=mapnik&marker=${lat},${lon}" loading="lazy"></iframe></div>`;
+      col.querySelector('.mapa-park').addEventListener('click', () => obrirModalMapa(p.nom, p.bbox));
+      c.appendChild(col);
+    });
+  }
+
+  async function fetchRutesOverpass(prefix, areaIso) {
+    const areaFilter = areaIso
+      ? `area["ISO3166-2"="${areaIso}"]->.searchArea;`
+      : `area["ISO3166-1"="ES"]->.searchArea;`;
+
+    const query = `[out:json][timeout:30];
+      ${areaFilter}
+      (
+        relation["route"="hiking"]["ref"~"^${prefix}"](area.searchArea);
+      );
+      out center tags(${OVERPASS_LIMIT});`;
+
+    const res = await fetch(OVERPASS_URL, {
+      method: 'POST',
+      body: 'data=' + encodeURIComponent(query),
+    });
+
+    if (!res.ok) throw new Error('Error HTTP ' + res.status);
+    const data = await res.json();
+
+    return data.elements
+      .filter(el => el.tags && el.tags.ref)
+      .map(el => {
+        const ref = el.tags.ref;
+        const centre = el.center || { lat: 0, lon: 0 };
+        const lon = centre.lon;
+        const lat = centre.lat;
+        const pad = 0.04;
+        const bbox = `${lon - pad},${lat - pad},${lon + pad},${lat + pad}`;
+        const dist = el.tags.distance || el.tags.length || '';
+        const km = dist ? parseFloat(dist).toFixed(1).replace(/\.0$/, '') + ' km' : '';
+        const nom = el.tags.name ? `${ref} — ${el.tags.name}` : ref;
+        return { nom, ref, km, bbox };
+      })
+      .sort((a, b) => a.ref.localeCompare(b.ref, undefined, { numeric: true }));
+  }
+
+  function setStatus(text, error) {
+    const el = document.getElementById('status-api');
+    if (el) {
+      el.textContent = text;
+      el.style.color = error ? 'var(--bs-danger)' : '';
+    }
+  }
+
+  async function carregarRutes() {
+    const select = document.getElementById('selector-ccaa');
+    const iso = select ? select.value : '';
+    const ccaaNom = select ? select.options[select.selectedIndex].text : 'Totes';
+
+    setStatus(`⏳ Carregant GR i PR de ${ccaaNom}...`);
+
+    try {
+      const [grs, prs] = await Promise.all([
+        fetchRutesOverpass('GR', iso),
+        fetchRutesOverpass('PR', iso),
+      ]);
+
+      crearLlista('gr-list', grs);
+      crearLlista('pr-list', prs);
+
+      const total = grs.length + prs.length;
+      const detalls = [];
+      if (grs.length) detalls.push(`${grs.length} GR`);
+      if (prs.length) detalls.push(`${prs.length} PR`);
+      setStatus(`✅ ${detalls.join(', ')} de ${ccaaNom}`);
+    } catch (err) {
+      console.warn('Overpass API error:', err);
+      setStatus(`⚠️ No s\'ha pogut contactar l\'API. Mostrant dades locals.`, true);
+      crearLlista('gr-list', fallbackGR);
+      crearLlista('pr-list', fallbackPR);
+    }
+  }
+
+  function initSelector() {
+    const select = document.getElementById('selector-ccaa');
+    CCAA.forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c.iso;
+      opt.textContent = c.nom;
+      if (c.iso === 'ES-CT') opt.selected = true;
+      select.appendChild(opt);
+    });
+    select.addEventListener('change', carregarRutes);
+    document.getElementById('btn-recargar').addEventListener('click', carregarRutes);
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const mm = document.getElementById('modal-mapa');
+    mm.addEventListener('click', e => { if (e.target === mm) tancarModalMapa(); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') tancarModalMapa(); });
+
+    initSelector();
+    crearParcs(parcs);
+    carregarRutes();
+  });
+</script>
+</body>
+</html>
