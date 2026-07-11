@@ -36,13 +36,13 @@
 }
 
 [data-bs-theme="light"] {
-  --glass:           rgba(0,0,0,0.04);
-  --glass-hover:     rgba(0,0,0,0.07);
-  --glass-border:    rgba(0,0,0,0.09);
+  --glass:           rgba(255,255,255,0.20);
+  --glass-hover:     rgba(255,255,255,0.30);
+  --glass-border:    rgba(255,255,255,0.35);
   --bg:              #f0fdf4;
   --text-primary:    #0f172a;
-  --text-secondary:  #475569;
-  --text-muted:      #94a3b8;
+  --text-secondary:  #1e3a2a;
+  --text-muted:      #3d6e50;
 }
 
 /* === BASE === */
@@ -53,6 +53,11 @@ body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   font-feature-settings: 'cv02','cv03','cv04','cv11';
   background: var(--bg);
+  background-image: url('img/bg-montanya.jpg');
+  background-size: cover;
+  background-position: center top;
+  background-attachment: fixed;
+  background-repeat: no-repeat;
   color: var(--text-primary);
   min-height: 100dvh;
   display: flex;
@@ -61,23 +66,17 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* Ambient gradient background */
+/* Dark overlay + ambient tint on top of the background image */
 body::before {
   content: '';
   position: fixed;
   inset: 0;
   background:
-    radial-gradient(ellipse 70% 55% at 15% -5%,  rgba(34,197,94,0.09)  0%, transparent 65%),
-    radial-gradient(ellipse 55% 45% at 85% 100%, rgba(16,185,129,0.07) 0%, transparent 60%),
-    radial-gradient(ellipse 40% 50% at 50% 50%,  rgba(4,120,87,0.04)   0%, transparent 70%);
+    radial-gradient(ellipse 70% 55% at 15% -5%,  rgba(34,197,94,0.07)  0%, transparent 65%),
+    radial-gradient(ellipse 55% 45% at 85% 100%, rgba(16,185,129,0.05) 0%, transparent 60%),
+    rgba(5, 9, 5, 0.62);
   pointer-events: none;
   z-index: 0;
-  animation: ambient 12s ease-in-out infinite alternate;
-}
-
-@keyframes ambient {
-  0%   { opacity: 1; }
-  100% { opacity: 0.55; }
 }
 
 /* === HEADER === */
